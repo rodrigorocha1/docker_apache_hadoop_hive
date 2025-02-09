@@ -1,0 +1,43 @@
+FROM ubuntu:20.04
+
+LABEL autor="Rodrigo"
+USER root
+
+RUN apt-get update && apt-get install -y \
+    openjdk-8-jdk \
+    ssh \
+    wget \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN java -version
+
+RUN mkdir hadoop
+RUN useradd -m hadoop
+RUN chown -R hadoop:hadoop /hadoop
+
+COPY hadoop-3.3.0.tar.gz /opt
+
+RUN mkdir /scripts
+
+COPY scripts/ /scripts/
+
+RUN chmod +x /scripts/*.sh
+
+RUN echo "source /scripts/setup-env.sh" >> /root/.bashrc
+USER hadoop
+
+RUN /scripts/setup-hadoop.sh
+
+
+
+RUN /scripts/setup-ssh.sh
+
+COPY hadoop/*.xml /hadoop/etc/hadoop
+
+
+RUN su - hadoop -c "/scripts/format-hdfs.sh"
+
+STOPSIGNAL SIGTERM
+
+CMD ["/bin/bash", "-c", "/scripts/start-all.sh && trap '/scripts/stop-all.sh' SIGTERM && wait"]
