@@ -1,0 +1,6 @@
+services:
+  hadoop:
+    build: .
+    env_file:
+      - .env
+    # outras configurações
